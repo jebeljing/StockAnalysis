@@ -51,9 +51,9 @@ object StockPolling  extends StockData {
     val NASDAQStockOutput = "NASDAQOutput"
 
     val sc = new SparkContext("local[*]", "StockAnalysis")
-    val data = sc.textFile(AMEXStock)
+//    val data = sc.textFile(AMEXStock)
 //    val data = sc.textFile(NYSEStock)
-//    val data = sc.textFile(NASDAQStock)
+    val data = sc.textFile(NASDAQStock)
     val symbols = data.flatMap(parseLine).cache()
 
     println("Stocks Symbols: " + symbols.count())
@@ -64,9 +64,9 @@ object StockPolling  extends StockData {
 
     println("Hot Stocks Amount: " + hotStocks.count())
 
-    val outputFile = AMEXStockOutput + new Date().getTime
+//    val outputFile = AMEXStockOutput + new Date().getTime
 //    val outputFile = NYSEStockOutput + new Date().getTime
-//    val outputFile = NASDAQStockOutput + new Date().getTime
+    val outputFile = NASDAQStockOutput + new Date().getTime
 
     hotStocks.saveAsTextFile(outputFile)
   }

@@ -12,6 +12,14 @@ import org.apache.spark.SparkContext
   */
 object StockPolling  extends StockData {
 
+  val AMEXStock = "AMEX-Stock.csv"
+  val NYSEStock = "NYSE-Stock.csv"
+  val NASDAQStock = "NASDAQ-Stock.csv"
+
+  val AMEXStockOutput = "AMEXOutput"
+  val NYSEStockOutput = "NYSEOutput"
+  val NASDAQStockOutput = "NASDAQOutput"
+
   def parseLine(line: String) : Option[(String, Double)] = {
     val fields = line.split("\",\"")
     if (fields.length >= 2) {
@@ -39,37 +47,31 @@ object StockPolling  extends StockData {
     }
   }
 
-  def main(args: Array[String]): Unit = {
-    Logger.getLogger("org").setLevel(Level.ERROR)
-
-    val AMEXStock = "AMEX-Stock.csv"
-    val NYSEStock = "NYSE-Stock.csv"
-    val NASDAQStock = "NASDAQ-Stock.csv"
-
-    val AMEXStockOutput = "AMEXOutput"
-    val NYSEStockOutput = "NYSEOutput"
-    val NASDAQStockOutput = "NASDAQOutput"
-
-    val sc = new SparkContext("local[*]", "StockAnalysis")
-//    val data = sc.textFile(AMEXStock)
-//    val data = sc.textFile(NYSEStock)
-    val data = sc.textFile(NASDAQStock)
+  def startToPollAndSave(sc: SparkContext, inputFile: String, outputFile: String): Unit = {
+    val data = sc.textFile(inputFile)
     val symbols = data.flatMap(parseLine).cache()
 
-    println("Stocks Symbols: " + symbols.count())
+    println(inputFile + " Stocks Symbols: " + symbols.count())
 
     val stocks = symbols.flatMap(pollStock).filter(_.averVol > 0)
 
     val hotStocks = stocks.filter(stock => stock.volume/stock.averVol > 3).cache()
 
-    println("Hot Stocks Amount: " + hotStocks.count())
+    println(inputFile + "Hot Stocks Amount: " + hotStocks.count())
 
-//    val outputFile = AMEXStockOutput + new Date().getTime
-//    val outputFile = NYSEStockOutput + new Date().getTime
-    val outputFile = NASDAQStockOutput + new Date().getTime
+    val savedFile = outputFile + new Date().getTime
 
-    hotStocks.saveAsTextFile(outputFile)
+    hotStocks.saveAsTextFile(savedFile)
   }
 
+  def main(args: Array[String]): Unit = {
+    Logger.getLogger("org").setLevel(Level.ERROR)
+    val sc = new SparkContext("local[*]", "StockAnalysis")
+
+    // Poll for NYSE
+    startToPollAndSave(sc, NYSEStock, NYSEStockOutput)
+    // Poll for NASDAQ
+    startToPollAndSave(sc, NASDAQStock, NASDAQStockOutput)
+  }
 
 }

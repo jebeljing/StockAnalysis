@@ -6,6 +6,7 @@ import java.util.Date
 import com.jebeljing.stock.{Stock, StockData}
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkContext
+import org.joda.time.DateTime
 
 /**
   * Created by jingshanyin on 10/16/17.
@@ -59,7 +60,8 @@ object StockPolling  extends StockData {
 
     println(inputFile + "Hot Stocks Amount: " + hotStocks.count())
 
-    val savedFile = outputFile + new Date().getTime
+    var date = new DateTime();
+    val savedFile = outputFile + date.getYear + "-" + date.getDayOfYear;
 
     hotStocks.saveAsTextFile(savedFile)
   }
